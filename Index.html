@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Macro Tracker — Traviss</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080810;
+    --surface: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.07);
+    --green: #4ade80;
+    --cyan: #22d3ee;
+    --amber: #f59e0b;
+    --red: #ff4d4d;
+    --purple: #a78bfa;
+    --text: #ffffff;
+    --muted: rgba(255,255,255,0.4);
+    --faint: rgba(255,255,255,0.07);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; padding-bottom: 100px; }
+
+/* HEADER */
+.header { background: linear-gradient(180deg, #0d1020 0%, var(–bg) 100%); padding: 20px 16px 0; border-bottom: 1px solid var(–border); }
+.header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+.app-title { font-family: ‘Bebas Neue’, sans-serif; font-size: 28px; letter-spacing: 2px; background: linear-gradient(90deg, #fff, rgba(255,255,255,0.5)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.app-sub { font-size: 11px; color: var(–muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px; }
+.date-badge { background: var(–faint); border: 1px solid var(–border); border-radius: 8px; padding: 4px 10px; font-size: 11px; color: var(–muted); font-family: ‘DM Mono’, monospace; }
+
+/* PHASE SWITCHER */
+.phase-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+.phase-btn { flex: 1; padding: 10px 8px; border-radius: 12px; border: 1px solid var(–border); background: var(–faint); color: var(–muted); cursor: pointer; font-size: 12px; font-weight: 700; font-family: ‘DM Sans’, sans-serif; text-align: center; transition: all 0.2s; }
+.phase-btn.active { border-color: rgba(74,222,128,0.4); background: rgba(74,222,128,0.1); color: var(–green); }
+.phase-btn .p-range { font-size: 10px; opacity: 0.7; margin-top: 2px; }
+.phase-btn .p-desc { font-size: 9px; opacity: 0.55; margin-top: 1px; }
+
+/* TABS */
+.tabs { display: flex; border-bottom: 1px solid var(–border); }
+.tab { flex: 1; padding: 10px 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; border: none; background: none; color: var(–muted); border-bottom: 2px solid transparent; cursor: pointer; font-family: ‘DM Sans’, sans-serif; transition: all 0.2s; }
+.tab.active { color: #fff; border-bottom-color: var(–green); }
+
+/* CONTENT */
+.content { padding: 16px; }
+
+/* CARDS */
+.card { background: var(–surface); border: 1px solid var(–border); border-radius: 16px; padding: 18px; margin-bottom: 14px; }
+.card-label { font-size: 10px; font-weight: 700; color: var(–muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 14px; }
+
+/* CALORIE CARD */
+.cal-card { background: rgba(74,222,128,0.05); border-color: rgba(74,222,128,0.15); }
+.cal-card.over { background: rgba(255,77,77,0.05); border-color: rgba(255,77,77,0.2); }
+.cal-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+.cal-number { font-family: ‘Bebas Neue’, sans-serif; font-size: 52px; line-height: 1; color: var(–green); letter-spacing: 1px; }
+.cal-number.over { color: var(–red); }
+.cal-target { font-size: 15px; color: var(–muted); }
+.cal-remaining-label { font-size: 10px; color: var(–muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; text-align: right; }
+.cal-remaining { font-family: ‘DM Mono’, monospace; font-size: 26px; font-weight: 700; text-align: right; }
+.cal-remaining.over { color: var(–red); }
+.cal-remaining-sub { font-size: 10px; color: var(–muted); text-align: right; }
+.progress-bar-wrap { height: 8px; background: rgba(255,255,255,0.07); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+.progress-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(–green), var(–cyan)); transition: width 0.4s ease; }
+.progress-bar-fill.over { background: var(–red); }
+.cal-footer { display: flex; justify-content: space-between; }
+.cal-footer span { font-size: 10px; color: var(–muted); }
+
+/* MACRO RINGS */
+.rings-wrap { display: flex; justify-content: space-around; align-items: center; }
+.ring-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ring-svg { transform: rotate(-90deg); }
+.ring-center { font-family: ‘DM Mono’, monospace; font-size: 17px; font-weight: 700; }
+.ring-center.over { color: var(–red); }
+.ring-unit { font-size: 8px; color: var(–muted); letter-spacing: 1px; text-transform: uppercase; }
+.ring-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.6); letter-spacing: 1px; text-transform: uppercase; }
+.ring-left { font-size: 9px; color: var(–muted); }
+.ring-left.over { color: var(–red); }
+
+/* PROGRESS BARS */
+.bar-row { margin-bottom: 14px; }
+.bar-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.bar-name { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.6); letter-spacing: 1px; text-transform: uppercase; }
+.bar-vals { font-size: 11px; font-family: ‘DM Mono’, monospace; }
+.bar-track { height: 6px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+
+/* WEIGHT */
+.weight-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.weight-input { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 14px; color: #fff; font-size: 20px; font-weight: 800; font-family: ‘DM Mono’, monospace; width: 110px; outline: none; text-align: center; }
+.weight-unit { font-size: 14px; color: var(–muted); }
+.weight-goal { margin-left: auto; text-align: right; }
+.weight-goal-label { font-size: 10px; color: var(–muted); text-transform: uppercase; letter-spacing: 1px; }
+.weight-goal-val { font-family: ‘Bebas Neue’, sans-serif; font-size: 30px; color: var(–green); letter-spacing: 1px; }
+
+/* LOG FORM */
+.form-label { font-size: 10px; font-weight: 700; color: var(–muted); letter-spacing: 1.5px; text-transform: uppercase; display: block; margin-bottom: 6px; }
+.form-select, .form-input { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 11px 14px; color: #fff; font-size: 13px; width: 100%; outline: none; font-family: ‘DM Sans’, sans-serif; margin-bottom: 12px; appearance: none; -webkit-appearance: none; }
+.form-select option { background: #1a1a2e; color: #fff; }
+.preview-macros { display: flex; gap: 8px; margin-bottom: 12px; }
+.preview-box { flex: 1; text-align: center; border-radius: 8px; padding: 8px 4px; }
+.preview-val { font-size: 15px; font-weight: 800; font-family: ‘DM Mono’, monospace; }
+.preview-lbl { font-size: 9px; color: var(–muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn { border: none; border-radius: 10px; padding: 12px 20px; font-size: 13px; font-weight: 800; cursor: pointer; letter-spacing: 0.5px; font-family: ‘DM Sans’, sans-serif; width: 100%; transition: opacity 0.2s; }
+.btn:active { opacity: 0.8; }
+.btn-green { background: var(–green); color: #000; }
+.btn-purple { background: var(–purple); color: #fff; }
+.btn-red { background: rgba(255,77,77,0.15); color: var(–red); border: 1px solid rgba(255,77,77,0.2); }
+
+/* MEAL LIST */
+.meal-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.meal-name { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+.meal-badges { display: flex; gap: 5px; flex-wrap: wrap; }
+.badge { border-radius: 6px; padding: 2px 7px; font-size: 10px; font-weight: 700; font-family: ‘DM Mono’, monospace; }
+.badge-green { background: rgba(74,222,128,0.15); color: var(–green); }
+.badge-cyan { background: rgba(34,211,238,0.15); color: var(–cyan); }
+.badge-amber { background: rgba(245,158,11,0.15); color: var(–amber); }
+.badge-purple { background: rgba(167,139,250,0.15); color: var(–purple); }
+.remove-btn { background: none; border: none; color: rgba(255,255,255,0.2); font-size: 22px; cursor: pointer; padding: 0 0 0 10px; line-height: 1; }
+.empty-state { text-align: center; padding: 40px 0; color: rgba(255,255,255,0.2); font-size: 14px; line-height: 1.8; }
+.totals-row { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.07); }
+.totals-grid { display: flex; gap: 8px; margin-top: 10px; }
+.total-box { flex: 1; border-radius: 10px; padding: 10px 6px; text-align: center; }
+.total-val { font-size: 16px; font-weight: 800; font-family: ‘DM Mono’, monospace; }
+.total-of { font-size: 9px; color: var(–muted); margin-top: 2px; }
+.total-lbl { font-size: 9px; color: var(–muted); margin-top: 1px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* TABS HIDDEN */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* MEALS HEADER */
+.meals-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+
+/* RESET DAY */
+.reset-btn { background: rgba(255,77,77,0.1); border: 1px solid rgba(255,77,77,0.2); color: var(–red); border-radius: 8px; padding: 5px 12px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: ‘DM Sans’, sans-serif; }
+</style>
+
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="app-title">Macro Tracker</div>
+      <div class="app-sub">Traviss · Fitness Protocol</div>
+    </div>
+    <div class="date-badge" id="dateBadge"></div>
+  </div>
+
+  <div class="phase-bar">
+    <button class="phase-btn active" id="phase1btn" onclick="setPhase(1)">
+      <div>Phase 1</div>
+      <div class="p-range">217 → 210 lbs</div>
+      <div class="p-desc">2 lbs/week · 2,700 cal</div>
+    </button>
+    <button class="phase-btn" id="phase2btn" onclick="setPhase(2)">
+      <div>Phase 2</div>
+      <div class="p-range">210 → 200 lbs</div>
+      <div class="p-desc">0.6 lbs/week · 3,300 cal</div>
+    </button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="setTab('dashboard')">Dashboard</button>
+    <button class="tab" onclick="setTab('log')">Log Food</button>
+    <button class="tab" onclick="setTab('meals')">Today's Meals</button>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- DASHBOARD -->
+
+  <div class="tab-content active" id="tab-dashboard">
+
+```
+<!-- Calorie Card -->
+<div class="card cal-card" id="calCard">
+  <div class="card-label">Calories Today</div>
+  <div class="cal-top">
+    <div>
+      <div class="cal-number" id="calNum">0</div>
+      <div class="cal-target">/ <span id="calTarget">2700</span> kcal</div>
+    </div>
+    <div>
+      <div class="cal-remaining-label">Remaining</div>
+      <div class="cal-remaining" id="calRemaining">2700</div>
+      <div class="cal-remaining-sub" id="calRemainingLabel">kcal left</div>
+    </div>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="calBar" style="width:0%"></div>
+  </div>
+  <div class="cal-footer">
+    <span id="tdeeLabel">TDEE ~3,700 kcal</span>
+    <span id="calPctLabel">0% of target</span>
+  </div>
+</div>
+
+<!-- Macro Rings -->
+<div class="card">
+  <div class="card-label">Macros</div>
+  <div class="rings-wrap">
+    <div class="ring-item">
+      <div style="position:relative;width:90px;height:90px;">
+        <svg class="ring-svg" width="90" height="90" style="position:absolute;top:0;left:0;">
+          <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8"/>
+          <circle cx="45" cy="45" r="36" fill="none" stroke="#4ade80" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 226" id="ringProtein"/>
+        </svg>
+        <div style="position:absolute;top:0;left:0;width:90px;height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <div class="ring-center" id="ringProteinVal">0</div>
+          <div class="ring-unit">g</div>
+        </div>
+      </div>
+      <div style="text-align:center">
+        <div class="ring-label">Protein</div>
+        <div class="ring-left" id="ringProteinLeft">230g left</div>
+      </div>
+    </div>
+    <div class="ring-item">
+      <div style="position:relative;width:90px;height:90px;">
+        <svg class="ring-svg" width="90" height="90" style="position:absolute;top:0;left:0;">
+          <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8"/>
+          <circle cx="45" cy="45" r="36" fill="none" stroke="#22d3ee" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 226" id="ringCarbs"/>
+        </svg>
+        <div style="position:absolute;top:0;left:0;width:90px;height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <div class="ring-center" id="ringCarbsVal">0</div>
+          <div class="ring-unit">g</div>
+        </div>
+      </div>
+      <div style="text-align:center">
+        <div class="ring-label">Carbs</div>
+        <div class="ring-left" id="ringCarbsLeft">281g left</div>
+      </div>
+    </div>
+    <div class="ring-item">
+      <div style="position:relative;width:90px;height:90px;">
+        <svg class="ring-svg" width="90" height="90" style="position:absolute;top:0;left:0;">
+          <circle cx="45" cy="45" r="36" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8"/>
+          <circle cx="45" cy="45" r="36" fill="none" stroke="#f59e0b" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 226" id="ringFat"/>
+        </svg>
+        <div style="position:absolute;top:0;left:0;width:90px;height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <div class="ring-center" id="ringFatVal">0</div>
+          <div class="ring-unit">g</div>
+        </div>
+      </div>
+      <div style="text-align:center">
+        <div class="ring-label">Fat</div>
+        <div class="ring-left" id="ringFatLeft">75g left</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Progress Bars -->
+<div class="card">
+  <div class="card-label">Progress to Targets</div>
+  <div class="bar-row">
+    <div class="bar-header">
+      <span class="bar-name">Protein</span>
+      <span class="bar-vals" id="barProteinVals" style="color:#4ade80">0 / 230g</span>
+    </div>
+    <div class="bar-track"><div class="bar-fill" id="barProtein" style="width:0%;background:#4ade80"></div></div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-header">
+      <span class="bar-name">Carbs</span>
+      <span class="bar-vals" id="barCarbsVals" style="color:#22d3ee">0 / 281g</span>
+    </div>
+    <div class="bar-track"><div class="bar-fill" id="barCarbs" style="width:0%;background:#22d3ee"></div></div>
+  </div>
+  <div class="bar-row" style="margin-bottom:0">
+    <div class="bar-header">
+      <span class="bar-name">Fat</span>
+      <span class="bar-vals" id="barFatVals" style="color:#f59e0b">0 / 75g</span>
+    </div>
+    <div class="bar-track"><div class="bar-fill" id="barFat" style="width:0%;background:#f59e0b"></div></div>
+  </div>
+</div>
+
+<!-- Weight -->
+<div class="card">
+  <div class="card-label">Current Weight</div>
+  <div class="weight-row">
+    <input type="number" class="weight-input" id="weightInput" value="217" oninput="updateWeight()">
+    <span class="weight-unit">lbs</span>
+    <div class="weight-goal">
+      <div class="weight-goal-label">To Goal</div>
+      <div class="weight-goal-val" id="weightToGoal">17 lbs</div>
+    </div>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="weightBar" style="width:0%"></div>
+  </div>
+  <div class="cal-footer">
+    <span>START 217</span>
+    <span>GOAL 200</span>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- LOG FOOD -->
+
+  <div class="tab-content" id="tab-log">
+
+```
+<div class="card">
+  <div class="card-label">Quick Add</div>
+  <label class="form-label">Select Food</label>
+  <select class="form-select" id="foodSelect" onchange="updatePreview()">
+    <option value="">Choose a food...</option>
+    <option value="130,26,0,3">Chicken Breast (4oz) — 130 cal</option>
+    <option value="160,22,0,8">Ground Beef 93% (4oz) — 160 cal</option>
+    <option value="70,6,0,5">Egg (whole) — 70 cal</option>
+    <option value="50,11,1,0">Egg Whites (3) — 50 cal</option>
+    <option value="100,17,9,0">Greek Yogurt (1 cup) — 100 cal</option>
+    <option value="130,25,3,2">Whey Protein (1 scoop) — 130 cal</option>
+    <option value="200,4,45,0">White Rice (1 cup cooked) — 200 cal</option>
+    <option value="150,5,27,3">Oats (1/2 cup dry) — 150 cal</option>
+    <option value="103,2,26,0">Sweet Potato (medium) — 103 cal</option>
+    <option value="105,1,27,0">Banana — 105 cal</option>
+    <option value="120,1,6,11">Avocado (1/2) — 120 cal</option>
+    <option value="164,6,6,14">Almonds (1oz) — 164 cal</option>
+    <option value="120,0,0,14">Olive Oil (1 tbsp) — 120 cal</option>
+    <option value="31,3,6,0">Broccoli (1 cup) — 31 cal</option>
+    <option value="200,23,0,12">Salmon (4oz) — 200 cal</option>
+    <option value="95,0,25,0">Apple — 95 cal</option>
+    <option value="170,20,0,9">Tuna (3oz can) — 170 cal</option>
+    <option value="110,8,12,3">Cottage Cheese (1/2 cup) — 110 cal</option>
+    <option value="220,7,44,2">Pasta (1 cup cooked) — 220 cal</option>
+    <option value="80,3,15,1">Black Beans (1/2 cup) — 80 cal</option>
+  </select>
+  <label class="form-label">Servings</label>
+  <input type="number" class="form-input" id="servingsInput" value="1" min="0.25" step="0.25" oninput="updatePreview()">
+  <div class="preview-macros" id="previewMacros" style="display:none">
+    <div class="preview-box" style="background:rgba(74,222,128,0.1)">
+      <div class="preview-val" style="color:#4ade80" id="prevP">0</div>
+      <div class="preview-lbl">Protein</div>
+    </div>
+    <div class="preview-box" style="background:rgba(34,211,238,0.1)">
+      <div class="preview-val" style="color:#22d3ee" id="prevC">0</div>
+      <div class="preview-lbl">Carbs</div>
+    </div>
+    <div class="preview-box" style="background:rgba(245,158,11,0.1)">
+      <div class="preview-val" style="color:#f59e0b" id="prevF">0</div>
+      <div class="preview-lbl">Fat</div>
+    </div>
+    <div class="preview-box" style="background:rgba(167,139,250,0.1)">
+      <div class="preview-val" style="color:#a78bfa" id="prevCal">0</div>
+      <div class="preview-lbl">Cal</div>
+    </div>
+  </div>
+  <button class="btn btn-green" onclick="addQuickFood()">Add Food</button>
+</div>
+
+<div class="card">
+  <div class="card-label">Custom Entry</div>
+  <label class="form-label">Food Name</label>
+  <input type="text" class="form-input" id="customName" placeholder="e.g. Grilled Salmon">
+  <div class="grid-2">
+    <div>
+      <label class="form-label">Protein (g)</label>
+      <input type="number" class="form-input" id="customProtein" placeholder="0">
+    </div>
+    <div>
+      <label class="form-label">Carbs (g)</label>
+      <input type="number" class="form-input" id="customCarbs" placeholder="0">
+    </div>
+    <div>
+      <label class="form-label">Fat (g)</label>
+      <input type="number" class="form-input" id="customFat" placeholder="0">
+    </div>
+    <div>
+      <label class="form-label">Calories</label>
+      <input type="number" class="form-input" id="customCal" placeholder="0">
+    </div>
+  </div>
+  <button class="btn btn-purple" onclick="addCustomFood()">Add Custom</button>
+</div>
+```
+
+  </div>
+
+  <!-- MEALS -->
+
+  <div class="tab-content" id="tab-meals">
+    <div class="card">
+      <div class="meals-header">
+        <div class="card-label" style="margin-bottom:0">Today's Log</div>
+        <button class="reset-btn" onclick="clearMeals()">Clear All</button>
+      </div>
+      <div id="mealsList">
+        <div class="empty-state">No foods logged yet.<br><span style="font-size:12px">Go to Log Food to add entries.</span></div>
+      </div>
+      <div class="totals-row" id="totalsRow" style="display:none">
+        <div class="card-label" style="margin-bottom:0">Totals</div>
+        <div class="totals-grid">
+          <div class="total-box" style="background:rgba(74,222,128,0.08)">
+            <div class="total-val" style="color:#4ade80" id="totalP">0g</div>
+            <div class="total-of" id="totalPof">of 230g</div>
+            <div class="total-lbl">Protein</div>
+          </div>
+          <div class="total-box" style="background:rgba(34,211,238,0.08)">
+            <div class="total-val" style="color:#22d3ee" id="totalC">0g</div>
+            <div class="total-of" id="totalCof">of 281g</div>
+            <div class="total-lbl">Carbs</div>
+          </div>
+          <div class="total-box" style="background:rgba(245,158,11,0.08)">
+            <div class="total-val" style="color:#f59e0b" id="totalF">0g</div>
+            <div class="total-of" id="totalFof">of 75g</div>
+            <div class="total-lbl">Fat</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // STATE
+  const PHASES = {
+    1: { calories: 2700, protein: 230, carbs: 281, fat: 75, tdee: '3,700' },
+    2: { calories: 3300, protein: 218, carbs: 425, fat: 80, tdee: '3,600' }
+  };
+
+  let state = {
+    phase: parseInt(localStorage.getItem('phase') || '1'),
+    meals: JSON.parse(localStorage.getItem('meals') || '[]'),
+    weight: parseFloat(localStorage.getItem('weight') || '217'),
+    lastDate: localStorage.getItem('lastDate') || ''
+  };
+
+  // Auto reset meals daily
+  const today = new Date().toDateString();
+  if (state.lastDate !== today) {
+    state.meals = [];
+    state.lastDate = today;
+    save();
+  }
+
+  function save() {
+    localStorage.setItem('phase', state.phase);
+    localStorage.setItem('meals', JSON.stringify(state.meals));
+    localStorage.setItem('weight', state.weight);
+    localStorage.setItem('lastDate', state.lastDate);
+  }
+
+  function getTotals() {
+    return state.meals.reduce((a, m) => ({
+      calories: a.calories + m.calories,
+      protein: a.protein + m.protein,
+      carbs: a.carbs + m.carbs,
+      fat: a.fat + m.fat
+    }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
+  }
+
+  // PHASE
+  function setPhase(p) {
+    state.phase = p;
+    save();
+    document.getElementById('phase1btn').className = 'phase-btn' + (p===1?' active':'');
+    document.getElementById('phase2btn').className = 'phase-btn' + (p===2?' active':'');
+    updateUI();
+  }
+
+  // TABS
+  let activeTab = 'dashboard';
+  function setTab(t) {
+    activeTab = t;
+    document.querySelectorAll('.tab').forEach((el,i) => {
+      el.className = 'tab' + (['dashboard','log','meals'][i]===t?' active':'');
+    });
+    document.querySelectorAll('.tab-content').forEach(el => el.className='tab-content');
+    document.getElementById('tab-'+t).className = 'tab-content active';
+  }
+
+  // DATE
+  function updateDate() {
+    const d = new Date();
+    const opts = { month:'short', day:'numeric' };
+    document.getElementById('dateBadge').textContent = d.toLocaleDateString('en-US', opts);
+  }
+
+  // WEIGHT
+  function updateWeight() {
+    state.weight = parseFloat(document.getElementById('weightInput').value) || 217;
+    save();
+    const toGoal = Math.max(state.weight - 200, 0);
+    document.getElementById('weightToGoal').textContent = toGoal + ' lbs';
+    const pct = Math.min(((217 - state.weight) / 17) * 100, 100);
+    document.getElementById('weightBar').style.width = Math.max(pct,0) + '%';
+  }
+
+  // PREVIEW
+  function updatePreview() {
+    const sel = document.getElementById('foodSelect').value;
+    const qty = parseFloat(document.getElementById('servingsInput').value) || 1;
+    const prev = document.getElementById('previewMacros');
+    if (!sel) { prev.style.display='none'; return; }
+    const [cal,p,c,f] = sel.split(',').map(Number);
+    prev.style.display='flex';
+    document.getElementById('prevP').textContent = Math.round(p*qty)+'g';
+    document.getElementById('prevC').textContent = Math.round(c*qty)+'g';
+    document.getElementById('prevF').textContent = Math.round(f*qty)+'g';
+    document.getElementById('prevCal').textContent = Math.round(cal*qty);
+  }
+
+  // ADD FOOD
+  function addQuickFood() {
+    const sel = document.getElementById('foodSelect');
+    const qty = parseFloat(document.getElementById('servingsInput').value) || 1;
+    if (!sel.value) return;
+    const [cal,p,c,f] = sel.value.split(',').map(Number);
+    const name = sel.options[sel.selectedIndex].text.split(' —')[0];
+    state.meals.push({ id: Date.now(), name, calories: Math.round(cal*qty), protein: Math.round(p*qty), carbs: Math.round(c*qty), fat: Math.round(f*qty) });
+    save();
+    sel.value = '';
+    document.getElementById('servingsInput').value = '1';
+    document.getElementById('previewMacros').style.display = 'none';
+    updateUI();
+    setTab('meals');
+  }
+
+  function addCustomFood() {
+    const name = document.getElementById('customName').value.trim();
+    if (!name) return;
+    state.meals.push({
+      id: Date.now(), name,
+      protein: parseInt(document.getElementById('customProtein').value)||0,
+      carbs: parseInt(document.getElementById('customCarbs').value)||0,
+      fat: parseInt(document.getElementById('customFat').value)||0,
+      calories: parseInt(document.getElementById('customCal').value)||0
+    });
+    save();
+    ['customName','customProtein','customCarbs','customFat','customCal'].forEach(id => document.getElementById(id).value='');
+    updateUI();
+    setTab('meals');
+  }
+
+  function removeFood(id) {
+    state.meals = state.meals.filter(m => m.id !== id);
+    save();
+    updateUI();
+  }
+
+  function clearMeals() {
+    if (state.meals.length === 0) return;
+    state.meals = [];
+    save();
+    updateUI();
+  }
+
+  // MAIN UI UPDATE
+  function updateUI() {
+    const ph = PHASES[state.phase];
+    const t = getTotals();
+    const circ = 2 * Math.PI * 36;
+
+    // Calorie card
+    const calOver = t.calories > ph.calories;
+    const calPct = Math.min(t.calories / ph.calories, 1);
+    const calCard = document.getElementById('calCard');
+    calCard.className = 'card cal-card' + (calOver?' over':'');
+    document.getElementById('calNum').textContent = t.calories;
+    document.getElementById('calNum').className = 'cal-number' + (calOver?' over':'');
+    document.getElementById('calTarget').textContent = ph.calories;
+    const rem = ph.calories - t.calories;
+    document.getElementById('calRemaining').textContent = calOver ? '+'+Math.abs(rem) : rem;
+    document.getElementById('calRemaining').className = 'cal-remaining' + (calOver?' over':'');
+    document.getElementById('calRemainingLabel').textContent = calOver ? 'over target' : 'kcal left';
+    document.getElementById('calBar').style.width = (calPct*100)+'%';
+    document.getElementById('calBar').className = 'progress-bar-fill' + (calOver?' over':'');
+    document.getElementById('tdeeLabel').textContent = 'TDEE ~'+ph.tdee+' kcal';
+    document.getElementById('calPctLabel').textContent = Math.round(calPct*100)+'% of target';
+
+    // Rings
+    function updateRing(ringId, valId, leftId, val, max, color) {
+      const pct = Math.min(val/max, 1);
+      const dash = pct * circ;
+      const over = val > max;
+      document.getElementById(ringId).setAttribute('stroke-dasharray', dash+' '+circ);
+      document.getElementById(ringId).setAttribute('stroke', over ? '#ff4d4d' : color);
+      document.getElementById(valId).textContent = val;
+      document.getElementById(valId).className = 'ring-center' + (over?' over':'');
+      const leftEl = document.getElementById(leftId);
+      leftEl.textContent = over ? '+'+(val-max)+'g over' : (max-val)+'g left';
+      leftEl.className = 'ring-left' + (over?' over':'');
+    }
+    updateRing('ringProtein','ringProteinVal','ringProteinLeft', t.protein, ph.protein, '#4ade80');
+    updateRing('ringCarbs','ringCarbsVal','ringCarbsLeft', t.carbs, ph.carbs, '#22d3ee');
+    updateRing('ringFat','ringFatVal','ringFatLeft', t.fat, ph.fat, '#f59e0b');
+
+    // Progress bars
+    function updateBar(barId, valsId, val, max, color) {
+      const pct = Math.min((val/max)*100, 100);
+      const over = val > max;
+      document.getElementById(barId).style.width = pct+'%';
+      document.getElementById(barId).style.background = over ? '#ff4d4d' : color;
+      document.getElementById(valsId).textContent = val+' / '+max+'g';
+      document.getElementById(valsId).style.color = over ? '#ff4d4d' : color;
+    }
+    updateBar('barProtein','barProteinVals', t.protein, ph.protein, '#4ade80');
+    updateBar('barCarbs','barCarbsVals', t.carbs, ph.carbs, '#22d3ee');
+    updateBar('barFat','barFatVals', t.fat, ph.fat, '#f59e0b');
+
+    // Totals labels
+    document.getElementById('totalPof').textContent = 'of '+ph.protein+'g';
+    document.getElementById('totalCof').textContent = 'of '+ph.carbs+'g';
+    document.getElementById('totalFof').textContent = 'of '+ph.fat+'g';
+
+    // Meals list
+    const list = document.getElementById('mealsList');
+    const totalsRow = document.getElementById('totalsRow');
+    if (state.meals.length === 0) {
+      list.innerHTML = '<div class="empty-state">No foods logged yet.<br><span style="font-size:12px">Go to Log Food to add entries.</span></div>';
+      totalsRow.style.display = 'none';
+    } else {
+      list.innerHTML = state.meals.map(m => `
+        <div class="meal-item">
+          <div style="flex:1">
+            <div class="meal-name">${m.name}</div>
+            <div class="meal-badges">
+              <span class="badge badge-green">P ${m.protein}g</span>
+              <span class="badge badge-cyan">C ${m.carbs}g</span>
+              <span class="badge badge-amber">F ${m.fat}g</span>
+              <span class="badge badge-purple">${m.calories} cal</span>
+            </div>
+          </div>
+          <button class="remove-btn" onclick="removeFood(${m.id})">×</button>
+        </div>
+      `).join('');
+      totalsRow.style.display = 'block';
+      document.getElementById('totalP').textContent = t.protein+'g';
+      document.getElementById('totalC').textContent = t.carbs+'g';
+      document.getElementById('totalF').textContent = t.fat+'g';
+    }
+
+    // Weight
+    document.getElementById('weightInput').value = state.weight;
+    updateWeight();
+  }
+
+  // INIT
+  updateDate();
+  setPhase(state.phase);
+  updateUI();
+</script>
+
+</body>
+</html>
