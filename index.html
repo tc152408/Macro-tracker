@@ -1109,7 +1109,8 @@ function updateUI(){
 
 updateDate(); updatePhaseLabels();
 const initS=state.settings;
-document.getElementById('appSub').textContent=`${initS.name} · ${initS.goalType==='loss'?'Cutting':'initS.goalType==='gain'?'Bulking':'Maintenance'}`;
+const goalLabel = initS.goalType==='loss' ? 'Cutting' : initS.goalType==='gain' ? 'Bulking' : 'Maintenance';
+document.getElementById('appSub').textContent=`${initS.name} · ${goalLabel}`;
 setPhase(state.phase); updateUI();
 </script>
 
