@@ -717,22 +717,38 @@ function buildSettingsFromForm(){
 }
 
 function applyCalculated(){
-  const s = buildSettingsFromForm();
-  const tdee = calculateTDEE(s);
+  const formData = buildSettingsFromForm();
+  const tdee = calculateTDEE(formData);
   const targetCals = calculateTargetCals(tdee, calcGoalType, calcRate);
-  const weightLbs = s.weightUnit==='lbs' ? s.currentWeight : s.currentWeight*2.20462;
+  const weightLbs = formData.weightUnit==='lbs' ? formData.currentWeight : formData.currentWeight*2.20462;
   const macros = calculateMacros(targetCals, weightLbs, calcGoalType);
 
+  // Fill input fields
   document.getElementById('settingCalories').value = targetCals;
   document.getElementById('settingProtein').value = macros.protein;
   document.getElementById('settingCarbs').value = macros.carbs;
   document.getElementById('settingFat').value = macros.fat;
 
+  // Write directly to state.settings so dashboard updates immediately
+  const s = state.settings;
+  Object.assign(s, formData);
+  s.calories = targetCals;
+  s.protein = macros.protein;
+  s.carbs = macros.carbs;
+  s.fat = macros.fat;
+  s.goalType = calcGoalType;
+  s.rate = calcRate;
+  s.activity = calcActivity;
+  save();
+  updatePhaseLabels();
+  updateWeight();
+  updateUI();
+
   // flash confirm
   const btn = document.querySelector('.apply-btn');
-  btn.textContent = '✅ Applied!';
+  btn.textContent = '✅ Saved & Applied!';
   btn.style.background = 'var(--green)';
-  setTimeout(()=>{btn.textContent='✅ Apply These Targets';btn.style.background='';},1500);
+  setTimeout(()=>{btn.textContent='✅ Apply These Targets';btn.style.background='';},2000);
 }
 
 function setActivity(act){
